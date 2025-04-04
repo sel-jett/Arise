@@ -10,7 +10,6 @@ services:
     volumes:
       - ./src:/usr/src/app/src:rw
       - ./db:/usr/src/app/db:rw
-    #   - ./:/usr/src/app/:rw
     environment:
       - NODE_ENV=development
       - PORT=3000
