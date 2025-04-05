@@ -11,9 +11,15 @@ const userSchema = {
 };
 
 const userRoutes: FastifyPluginAsync = async (fastify) => {
-  fastify.get('/users', async () => {
-    return fastify.db.findAllUsers();
-  });
+  fastify.route({
+    method : "GET",
+    url : "/users",
+    handler : fastify.db.findAllUsers
+  }
+  )
+  // fastify.get('/users', async () => {
+  //   return fastify.db.findAllUsers();
+  // });
 
   fastify.get<{ Params: { id: string } }>('/users/:id', {
     schema: {

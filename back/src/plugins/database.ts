@@ -20,22 +20,27 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
+        password TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
 
     const databaseInterface: DatabaseInterface = {
       findAllUsers: () => {
-        return db.prepare('SELECT id, name, email, created_at as createdAt FROM users').all() as User[];
+        return db.prepare('SELECT id, name, email, password, created_at as createdAt FROM users').all() as User[];
       },
 
       findUserById: (id: number) => {
         return db.prepare('SELECT id, name, email, created_at as createdAt FROM users WHERE id = ?').get(id) as User | undefined;
       },
 
+      findUserByEmail: (email: string) => {
+        return db.prepare('SELECT id, name, email, created_at as createdAt FROM users WHERE email = ?').get(email) as User | undefined;
+      },
+
       createUser: (user) => {
-        const stmt = db.prepare('INSERT INTO users (name, email) VALUES (?, ?)');
-        const info = stmt.run(user.name, user.email);
+        const stmt = db.prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
+        const info = stmt.run(user.name, user.email, user.password);
         return {
           id: info.lastInsertRowid as number,
           ...user,
