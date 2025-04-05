@@ -10,29 +10,31 @@ import {
 import { createUserHandler, loginHandler } from './user.controller'
 
 const userRoutes = async (fastify: FastifyInstance) => {
+    
+    fastify.withTypeProvider<ZodTypeProvider>().route({
+        method: 'POST',
+        url: '/login',
+        schema: {
+            body: loginSchema,
+            response: {
+                200: loginResponseSchema
+            }
+        },
+        handler: loginHandler
+    });
+    
     fastify.withTypeProvider<ZodTypeProvider>().route({
         method: 'POST',
         url: '/register',
         schema: {
             body: createUserSchema,
             response: {
-                201: createUserResponseSchema
+                200: createUserResponseSchema
             }
         },
         handler: createUserHandler
     });
 
-    // fastify.withTypeProvider<ZodTypeProvider>().route({
-    //     methode: 'POST',
-    //     url: '/login',
-    //     schema: {
-    //         body: loginSchema,
-    //         response: {
-    //             201: loginResponseSchema
-    //         }
-    //     },
-    //     handler: loginHandler
-    // })
 
     fastify.route({
         method: 'GET',
