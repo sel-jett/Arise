@@ -1,0 +1,15 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Next.js build output
+.next
+out
+
+# Misc
+.DS_Store
+.env*
+!.env.example
+.git
+.gitignore
+README.md
