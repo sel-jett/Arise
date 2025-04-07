@@ -1,8 +1,43 @@
+'use client'
 import Image from "next/image";
 import Link from "next/link";
+import { FormEvent } from "react";
+
+type signUpData = {
+  firstname: string,
+  lastname: string,
+  username: string,
+  email: string,
+  password: string,
+}
 
 const SignUp: React.FC = () => {
-  return (
+
+    // const passwordComplexityRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+    
+    async function submitData(event: FormEvent<HTMLFormElement>) {
+      event.preventDefault()
+      try {
+
+
+        const formData = new FormData(event.currentTarget);
+        const fields = Object.fromEntries(formData);
+        console.log("--------------->", JSON.stringify(fields))
+        const response = await fetch('http://localhost:3000/api/register', {
+          method: 'POST', 
+          headers: {'Content-Type':'application/json'},
+          body: JSON.stringify(fields)
+        }).then((res)=> {
+          console.log(res);
+        })
+        // const res = await post("api/register", formData);
+        // console.log("registred")
+      } catch (error) {
+        console.error("----->", error)
+      } 
+    }
+  
+    return (
     <>
       <div className="flex h-screen w-screen">
         <div className="flex-1 h-full w-full bg-[#B1B0B0] flex-row justify-center items-center">
@@ -27,19 +62,22 @@ const SignUp: React.FC = () => {
                 />
                 Continue with google
               </button>
-              <form action="" className="space-y-3">
+              <form 
+                action="" 
+                onSubmit={submitData}
+                className="space-y-3">
                 <div className="inline-flex justify-between w-full">
                   <input
                     required
                     type="text"
-                    name="First Name"
+                    name="firstname"
                     placeholder="First Name"
                     className="bg-[#D9D9D9] font-koh w-10/21 h-[42px] rounded-lg font-light border-[0.1px] border-gray-500 pl-6"
                   />
                   <input
                     required
                     type="text"
-                    name="Last Name"
+                    name="lastname"
                     placeholder="Last Name"
                     className="bg-[#D9D9D9] font-koh w-10/21 h-[42px] rounded-lg font-light border-[0.1px] border-gray-500 pl-6"
                   />
@@ -47,14 +85,14 @@ const SignUp: React.FC = () => {
                 <input
                   required
                   type="text"
-                  name="Username"
+                  name="username"
                   placeholder="Username"
                   className="bg-[#D9D9D9] font-koh w-full h-[42px] rounded-lg font-light border-[0.1px] border-gray-500 pl-6"
                 />
                 <input
                   required
                   type="email"
-                  name="Email"
+                  name="email"
                   placeholder="Email"
                   className="bg-[#D9D9D9] font-koh w-full h-[42px] rounded-lg font-light border-[0.1px] border-gray-500 pl-6"
                 />
@@ -62,12 +100,14 @@ const SignUp: React.FC = () => {
                 <input
                   required
                   type="password"
-                  name="Password"
+                  name="password"
                   placeholder="Password"
                   className="bg-[#D9D9D9] font-koh w-full h-[42px] rounded-lg font-light border-[0.1px] border-gray-500 pl-6"
                 />
 
-                <button className="bg-black text-white w-full h-[50px] rounded-lg font-koh">
+                <button 
+                  type="submit"
+                  className="bg-black text-white w-full h-[50px] rounded-lg font-koh">
                   Continue
                 </button>
               </form>

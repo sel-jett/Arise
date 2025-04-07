@@ -1,8 +1,10 @@
 import { z } from 'zod';
 
 export const createUserSchema = z.object({
+    firstname: z.string(),
+    lastname: z.string(),
+    username: z.string(),
     email: z.string(),
-    name: z.string(),
     password: z.string(),
 })
 
@@ -11,7 +13,7 @@ export type CreateUserIput = z.infer<typeof createUserSchema>
 export const createUserResponseSchema = z.object({
     id: z.string(),
     email: z.string(),
-    name: z.string()
+    username: z.string()
 })
 
 export const loginSchema = z.object({

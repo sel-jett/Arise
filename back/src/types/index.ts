@@ -2,7 +2,9 @@ import { FastifyPluginAsync, RawReplyDefaultExpression, RawRequestDefaultExpress
 
 export interface User {
     id?: number;
-    name: string;
+    firstname: string;
+    lastname: string;
+    username: string;
     email: string;
     password: string;
     createdAt?: string;

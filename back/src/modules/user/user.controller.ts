@@ -8,7 +8,7 @@ export async function createUserHandler(
 
     const Fastify = request.server;
     
-    const {email, name, password} = request.body;
+    const {firstname, lastname, username, email, password} = request.body;
     const user = Fastify.db.findUserByEmail(email);
     if (user) {
         return reply.code(401).send({
@@ -19,14 +19,16 @@ export async function createUserHandler(
     try {
         Fastify.bcrypt.hash('')
         const user = Fastify.db.createUser({
-                name: name,
+                firstname: firstname,
+                lastname: lastname,
+                username: username,
                 email: email,
                 password: (await Fastify.bcrypt.hash(password)).toString(),
     });
         reply.code(201).send({
             id: 'will be abck for you',
             email,
-            name
+            username
         })
     } catch(error: any) {
         if (error.message.includes('UNIQUE constraint failed')) {
@@ -55,7 +57,7 @@ export  function loginHandler(
     const payload = {
         id: user.id,
         email: user.email,
-        name: user.name,
+        username: user.username,
     }
     const token = Fastify.jwt.sign({ payload })
 

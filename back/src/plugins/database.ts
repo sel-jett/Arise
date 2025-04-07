@@ -18,7 +18,9 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
     db.exec(`
       CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
+        firstname TEXT NOT NULL,
+        lastname TEXT NOT NULL,
+        username TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -27,20 +29,20 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
 
     const databaseInterface: DatabaseInterface = {
       findAllUsers: () => {
-        return db.prepare('SELECT id, name, email, password, created_at as createdAt FROM users').all() as User[];
+        return db.prepare('SELECT id, username, email, password, created_at as createdAt FROM users').all() as User[];
       },
 
       findUserById: (id: number) => {
-        return db.prepare('SELECT id, name, email, created_at as createdAt FROM users WHERE id = ?').get(id) as User | undefined;
+        return db.prepare('SELECT id, username, email, created_at as createdAt FROM users WHERE id = ?').get(id) as User | undefined;
       },
 
       findUserByEmail: (email: string) => {
-        return db.prepare('SELECT id, name, email, created_at as createdAt FROM users WHERE email = ?').get(email) as User | undefined;
+        return db.prepare('SELECT id, username, email, created_at as createdAt FROM users WHERE email = ?').get(email) as User | undefined;
       },
 
       createUser: (user) => {
-        const stmt = db.prepare('INSERT INTO users (name, email, password) VALUES (?, ?, ?)');
-        const info = stmt.run(user.name, user.email, user.password);
+        const stmt = db.prepare('INSERT INTO users (firstname, lastname, username, email, password) VALUES (?, ?, ?, ? ,?)');
+        const info = stmt.run(user.firstname, user.lastname, user.username, user.email, user.password);
         return {
           id: info.lastInsertRowid as number,
           ...user,
@@ -52,9 +54,9 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
         const existingUser = databaseInterface.findUserById(id);
         if (!existingUser) return false;
 
-        const { name, email } = { ...existingUser, ...user };
-        const stmt = db.prepare('UPDATE users SET name = ?, email = ? WHERE id = ?');
-        const info = stmt.run(name, email, id);
+        const { username, email } = { ...existingUser, ...user };
+        const stmt = db.prepare('UPDATE users SET username = ?, email = ? WHERE id = ?');
+        const info = stmt.run(username, email, id);
         return info.changes > 0;
       },
 
