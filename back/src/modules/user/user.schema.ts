@@ -4,7 +4,7 @@ export const createUserSchema = z.object({
     firstname: z.string(),
     lastname: z.string(),
     username: z.string(),
-    email: z.string(),
+    email: z.string().email(),
     password: z.string(),
 })
 
@@ -21,7 +21,7 @@ export const loginSchema = z.object({
     //     required_error: 'Email is required',
     //     invalid_type_error: 'Email must be a string',
     // }).email(),
-    email: z.string(),
+    email: z.string().email(),
     password: z.string(),
 })
 

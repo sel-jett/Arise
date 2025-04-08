@@ -7,7 +7,15 @@ export interface User {
     username: string;
     email: string;
     password: string;
+    mail_verified?: number;
     createdAt?: string;
+}
+
+export interface Otp {
+  id?: number;
+  email: string;
+  otp: string;
+  createdAt?: string;
 }
 
 export interface DatabaseInterface {
@@ -17,6 +25,9 @@ export interface DatabaseInterface {
     createUser: (User: Omit<User, 'id' | 'createdAt'>) => User;
     updateUser: (id: number, user:Partial<User>) => boolean;
     deleteUser: (id: number) => boolean;
+    findEmailOtp: (email: string) => Otp | undefined;
+    findOtp: (otp: string) => Otp | undefined;
+    createOtp: (Otp: Omit<Otp, 'id' | 'createdAt'>) => Otp;
 }
 
 // declare module 'fastify' {
