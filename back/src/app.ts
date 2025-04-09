@@ -5,10 +5,12 @@ import dbPlugin from './plugins/database';
 import userRoutes from './modules/user/user.route';
 import { request } from 'http';
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
-// import fastifyBcrypt from 'fastify-bcrypt-plugin';
 import fastifyBcrypt from 'fastify-bcrypt';
 import fastifyJwt from '@fastify/jwt';
 import fastifyCookie from '@fastify/cookie';
+// import nodemailer from 'nodemailer';
+import mailer from 'fastify-mailer'
+
 
 export function buildApp(): FastifyInstance {
   const app = fastify({
@@ -28,6 +30,10 @@ export function buildApp(): FastifyInstance {
   app.register(cors, {
     origin: "*"
   });
+
+  // app.register(fastify-nodemailer, {
+
+  // });
 
 
   app.register(fastifyBcrypt, {

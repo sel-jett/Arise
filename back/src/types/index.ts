@@ -1,4 +1,5 @@
 import { FastifyPluginAsync, RawReplyDefaultExpression, RawRequestDefaultExpression, RawServerBase, RawServerDefault } from 'fastify'
+import { Transporter } from 'nodemailer';
 
 export interface User {
     id?: number;
@@ -36,12 +37,15 @@ export interface DatabaseInterface {
 //     }
 // }
 
+export interface FastifyMailerNamedInstance {
+  [namespace: string]: Transporter;
+}
+
+export type FastifyMailer = FastifyMailerNamedInstance & Transporter;
+
 declare module 'fastify' {
-    export interface FastifyInstance<
-    RawServer extends RawServerBase = RawServerDefault,
-    RawRequest extends RawRequestDefaultExpression<RawServer> = RawRequestDefaultExpression<RawServer>,
-    RawReply extends RawReplyDefaultExpression<RawServer> = RawReplyDefaultExpression<RawServer>
-  > {
+    export interface FastifyInstance {
       db: DatabaseInterface;
+      mailer: FastifyMailer;
     }
   }
