@@ -24,9 +24,11 @@ export function buildApp(): FastifyInstance {
   app.setSerializerCompiler(serializerCompiler)
 
   app.register(sensible);
+
   app.register(cors, {
-    origin: true
+    origin: "*"
   });
+
 
   app.register(fastifyBcrypt, {
     saltWorkFactor: 12
