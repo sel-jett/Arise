@@ -3,15 +3,22 @@ version: '3.8'
 services:
   api:
     build:
-      context: .
+      context: ./back
       dockerfile: Dockerfile
     ports:
       - "3000:3000"
     volumes:
-      - ./src:/usr/src/app/src:rw
-      - ./db:/usr/src/app/db:rw
+      - ./back/src:/usr/src/app/src:rw
+      - ./back/db:/usr/src/app/db:rw
     environment:
       - NODE_ENV=development
       - PORT=3000
       - HOST=0.0.0.0
+    restart: unless-stopped
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
     restart: unless-stopped
