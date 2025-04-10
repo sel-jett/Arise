@@ -23,7 +23,7 @@ const dbPlugin: FastifyPluginAsync = async (fastify) => {
         username TEXT NOT NULL,
         email TEXT NOT NULL UNIQUE,
         password TEXT NOT NULL,
-        mail_verified NUMERIC NOT NULL,
+        mail_verified NUMERIC default 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
       CREATE TABLE IF NOT EXISTS otp (

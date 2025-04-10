@@ -1,1 +1,0 @@
-import mailer from 'fastify-mailer'

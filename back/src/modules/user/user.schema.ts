@@ -5,6 +5,7 @@ export const createUserSchema = z.object({
     lastname: z.string(),
     username: z.string(),
     email: z.string().email(),
+    mail_verified: z.number(),
     password: z.string(),
 })
 

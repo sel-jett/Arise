@@ -1,5 +1,6 @@
 import { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import { CreateUserIput, LoginUserInput } from "./user.schema"
+import sendTestMail from "../../services/sendMail";
 
 export async function createUserHandler(
     request: FastifyRequest<{ Body: CreateUserIput }>,
@@ -8,25 +9,25 @@ export async function createUserHandler(
 
     const Fastify = request.server;
     
-    const {firstname, lastname, username, email, password} = request.body;
-    const user = Fastify.db.findUserByEmail(email);
+    const {firstname, lastname, username, email, mail_verified, password} = request.body;
+    // const user = Fastify.db.findUserByEmail(email);
     
-    if (user && user.mail_verified == 0) {
-        try {
-            const deletedUser = Fastify.db.deleteUser(user.id || 0);
-        } catch(error) {
-            console.log("Unverified user failed to be deleted")
-            return reply.code(401).send({
-                success: false,
-                message: 'Unverified user failed to be deleted',
-            })
-        }
-    } else if (user) {
-        return reply.code(401).send({
-            success: false,
-            message: 'User already exists with this email',
-        })
-    }
+    // if (user && user.mail_verified == 0) {
+    //     try {
+    //         const deletedUser = Fastify.db.deleteUser(user.id || 0);
+    //     } catch(error) {
+    //         console.log("Unverified user failed to be deleted")
+    //         return reply.code(401).send({
+    //             success: false,
+    //             message: 'Unverified user failed to be deleted',
+    //         })
+    //     }
+    // } else if (user) {
+    //     return reply.code(401).send({
+    //         success: false,
+    //         message: 'User already exists with this email',
+    //     })
+    // }
     
     try {
         const user = Fastify.db.createUser({
@@ -34,8 +35,14 @@ export async function createUserHandler(
                 lastname: lastname,
                 username: username,
                 email: email,
+                mail_verified: mail_verified,
                 password: (await Fastify.bcrypt.hash(password)).toString(),
-    });
+        });
+
+        console.log("arrived here \\\\\\\\\\\\\\\\");
+        const html = `<p>Please confirm your email by clicking on the following link:</p><p></p>`;
+        await sendTestMail("se1337jettioui@gmail.com", "welcome", "hello world", html);
+        console.log("arrived here2222 \\\\\\\\\\\\\\\\");
         // const response = Fastify.db.findEmailOtp(email);
         // if (response.length === 0 || otp !== response[0].otp) {
         //     reply.code(400).send({
@@ -43,11 +50,11 @@ export async function createUserHandler(
         //         message: 'The OTP is not valid',
         //     });
         // }
-        // reply.code(201).send({
-        //     id: 'will be abck for you',
-        //     email,
-        //     username
-        // })
+        reply.code(201).send({
+            id: 'will be abck for you',
+            email,
+            username
+        })
     } catch(error: any) {
         if (error.message.includes('UNIQUE constraint failed')) {
             return reply.conflict('Email already exists');
@@ -95,6 +102,7 @@ export async function OtpSenderHandler(
                 otp: otp,
                 email: email,
     });
+
         // const response = Fastify.db.findEmailOtp(email);
         // if (response.length === 0 || otp !== response[0].otp) {
         //     reply.code(400).send({
