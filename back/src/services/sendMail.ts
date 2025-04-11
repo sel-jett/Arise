@@ -1,7 +1,9 @@
 import Mailgun from 'mailgun.js';
 import formData from 'form-data'
+import { config } from 'dotenv';
 
 
+config();
 const mailgunClient = new Mailgun(formData);
 const mgtest = mailgunClient.client({
     username: 'api',
