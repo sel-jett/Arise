@@ -23,9 +23,15 @@ const sendTestMail = async (to: string, subject: string, text: string, html: str
 
     try {
         const response = await mgtest.messages.create(domain, data);
-        return response;
+        return {
+            success: true,
+            message: response
+        };
     } catch (error) {
-        throw new Error(`Failed to send email: ${error}`);
+        return {
+            success: false,
+            message: "Failed to send Email"
+        }
     }
 }
 
