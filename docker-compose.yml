@@ -21,4 +21,6 @@ services:
       dockerfile: Dockerfile
     ports:
       - "3001:3001"
+    volumes:
+      - .:/app
     restart: unless-stopped
