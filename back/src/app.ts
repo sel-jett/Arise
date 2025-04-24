@@ -9,9 +9,7 @@ import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod
 import fastifyBcrypt from 'fastify-bcrypt';
 import fastifyJwt from '@fastify/jwt';
 import fastifyCookie from '@fastify/cookie';
-import websocket, { SocketStream } from '@fastify/websocket'; // olamrabt
-import { WebSocket } from 'ws';
-
+import websocket from '@fastify/websocket'; // olamrabt
 
 export function buildApp(): FastifyInstance {
   const app = fastify({
@@ -22,6 +20,7 @@ export function buildApp(): FastifyInstance {
       }
     }
   });
+
 
   app.setValidatorCompiler(validatorCompiler)
   app.setSerializerCompiler(serializerCompiler)
@@ -36,8 +35,6 @@ export function buildApp(): FastifyInstance {
   app.register(fastifyBcrypt, {
     saltWorkFactor: 12
   });
-  // added this 
-  app.register(websocket);
 
   app.register(fastifyJwt, {
     secret: 'supersecret'
@@ -49,8 +46,8 @@ export function buildApp(): FastifyInstance {
 
   app.register(userRoutes, { prefix: '/api' });
 
+  app.register(websocket);
 
-  let clients: WebSocket[] = [];
 
 
   app.get('/', async (request, reply) => {
@@ -72,28 +69,17 @@ export function buildApp(): FastifyInstance {
   });
 
 
-  app.get('/ws', { websocket: true }, (connection: SocketStream, _req) => {
-    const socket = connection.socket;
-    clients.push(socket);
-
-    socket.on('message', (message: Buffer) => {
-      clients.forEach(client => {
-        if (client !== socket) {
-          client.send(message);
-        }
-      });
-    });
-
-    socket.on('close', () => {
-      clients = clients.filter(c => c !== socket);
-    });
+  app.register(async function (app) {
+    app.get('/ws', { websocket: true }, (socket, req) => {
+      socket.on('message', message => {
+        socket.send('hi from server')
+        console.log("received : ", message.toString());
+      })
+    })
+  })
 
 
-    return {
-      message: "signaling is working",
-      connectedClients: clients.length
-    };
-  });
+
 
   return app;
 }
