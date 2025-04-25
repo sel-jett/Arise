@@ -70,10 +70,17 @@ export function buildApp(): FastifyInstance {
 
   // this part is for the game 
 
+
   app.register(async function (app) {
 
+    function getAvailablePlayerId(players: { id: number, socket: WebSocket }[]): number {
+      const taken = players.map(p => p.id);
+      return taken.includes(0) ? 1 : 0;
+    }
+
     const gameRoom = {
-      players: [] as SocketStream['socket'][],
+      players: [] as { id: number, socket: SocketStream['socket'] }[],
+
       state: {
         ball: { x: 0, y: 0, dx: 1, dy: 1 },
         paddles: [{ y: 0 }, { y: 0 }]
@@ -87,20 +94,122 @@ export function buildApp(): FastifyInstance {
         return;
       }
 
-      const playerId = gameRoom.players.length;
-      gameRoom.players.push(socket);
+      const playerId = getAvailablePlayerId(gameRoom.players);
+      gameRoom.players.push({ id: playerId, socket });
 
       socket.send(JSON.stringify({ type: 'player', index: playerId }));
 
-      socket.on('message', rawMessage => {
-        const message = JSON.parse(rawMessage.toString());
 
-        if (message.type === 'paddle') {
-          gameRoom.state.paddles[playerId].y = message.y;
+      socket.on('message', (msg) => {
+        console.log('Received message from client:', msg.toString());
+
+        try {
+          const message = JSON.parse(msg.toString());
+          if (message.type === 'paddle') {
+            console.log(`Updating paddle for player ${playerId} to y=${message.y}`);
+            gameRoom.state.paddles[playerId].y = message.y;
+          }
+        } catch (err) {
+          console.error('Invalid message:', msg.toString());
         }
-
-        socket.send(JSON.stringify({ type: 'ack', data: 'paddle received' }));
       });
+
+
+      if (gameRoom.players.length === 2) {
+
+        gameRoom.players.forEach((player) => {
+          player.socket.send(JSON.stringify({
+            type: 'start',
+          }));
+        });
+      }
+
+      if (gameRoom.players.length === 2) {
+        let score = [0, 0];
+        const canvasWidth = 1000;
+        const canvasHeight = 600;
+        const paddleHeight = 100;
+        const paddleWidth = 10;
+        const leftPaddleX = 20;
+        const rightPaddleX = 970;
+        const ballRadius = 10;
+
+        gameRoom.state.ball = {
+          x: canvasWidth / 2,
+          y: canvasHeight / 2,
+          dx: Math.random() > 0.5 ? 4 : -4,
+          dy: Math.random() > 0.5 ? 3 : -3
+        };
+
+        const interval = setInterval(() => {
+          const ball = gameRoom.state.ball;
+          const paddles = gameRoom.state.paddles;
+
+          ball.x += ball.dx;
+          ball.y += ball.dy;
+
+          if (ball.y <= 0 || ball.y >= canvasHeight) {
+            ball.dy *= -1;
+          }
+
+          if (
+            ball.x - ballRadius <= leftPaddleX + paddleWidth &&
+            ball.y >= paddles[0].y &&
+            ball.y <= paddles[0].y + paddleHeight
+          ) {
+            ball.dx *= -1;
+          }
+
+          if (
+            ball.x + ballRadius >= rightPaddleX &&
+            ball.y >= paddles[1].y &&
+            ball.y <= paddles[1].y + paddleHeight
+          ) {
+            ball.dx *= -1;
+          }
+
+          if (ball.x < 0) {
+            score[1]++;
+            resetBall(ball);
+          } else if (ball.x > canvasWidth) {
+            score[0]++;
+            resetBall(ball);
+          }
+
+          const gameState = {
+            type: 'state',
+            ball: { x: ball.x, y: ball.y },
+            paddles: [
+              { y: paddles[0].y },
+              { y: paddles[1].y }
+            ],
+            score
+          };
+
+          for (const player of gameRoom.players) {
+            player.socket.send(JSON.stringify(gameState));
+          }
+
+        }, 1000 / 60); // 60 FPS
+
+        const resetBall = (ball: typeof gameRoom.state.ball) => {
+          ball.x = canvasWidth / 2;
+          ball.y = canvasHeight / 2;
+          ball.dx = Math.random() > 0.5 ? 4 : -4;
+          ball.dy = Math.random() > 0.5 ? 3 : -3;
+        };
+
+        for (const player of gameRoom.players) {
+          player.socket.on('close', () => {
+            clearInterval(interval);
+          });
+        }
+      }
+
+      socket.on('close', () => {
+        gameRoom.players = gameRoom.players.filter(p => p.socket !== socket);
+      });
+
     })
   })
 
