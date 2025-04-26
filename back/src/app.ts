@@ -70,9 +70,7 @@ export function buildApp(): FastifyInstance {
 
   // this part is for the game 
 
-
   app.register(async function (app) {
-
     function getAvailablePlayerId(players: { id: number, socket: WebSocket }[]): number {
       const taken = players.map(p => p.id);
       return taken.includes(0) ? 1 : 0;
@@ -80,10 +78,10 @@ export function buildApp(): FastifyInstance {
 
     const gameRoom = {
       players: [] as { id: number, socket: SocketStream['socket'] }[],
-
       state: {
         ball: { x: 0, y: 0, dx: 1, dy: 1 },
-        paddles: [{ y: 0 }, { y: 0 }]
+        paddles: [{ y: 250 }, { y: 250 }], // start paddles at center
+        inputs: [{ up: false, down: false }, { up: false, down: false }]
       }
     };
 
@@ -99,21 +97,19 @@ export function buildApp(): FastifyInstance {
 
       socket.send(JSON.stringify({ type: 'player', index: playerId }));
 
-
       socket.on('message', (msg) => {
-        console.log('Received message from client:', msg.toString());
-
         try {
           const message = JSON.parse(msg.toString());
-          if (message.type === 'paddle') {
-            console.log(`Updating paddle for player ${playerId} to y=${message.y}`);
-            gameRoom.state.paddles[playerId].y = message.y;
+          if (message.type === 'input') {
+            gameRoom.state.inputs[playerId] = {
+              up: message.up,
+              down: message.down
+            };
           }
         } catch (err) {
           console.error('Invalid message:', msg.toString());
         }
       });
-
 
       if (gameRoom.players.length === 2) {
 
@@ -122,9 +118,7 @@ export function buildApp(): FastifyInstance {
             type: 'start',
           }));
         });
-      }
 
-      if (gameRoom.players.length === 2) {
         let score = [0, 0];
         const canvasWidth = 1000;
         const canvasHeight = 600;
@@ -134,21 +128,34 @@ export function buildApp(): FastifyInstance {
         const rightPaddleX = 970;
         const ballRadius = 10;
 
-        gameRoom.state.ball = {
-          x: canvasWidth / 2,
-          y: canvasHeight / 2,
-          dx: Math.random() > 0.5 ? 4 : -4,
-          dy: Math.random() > 0.5 ? 3 : -3
+        const resetBall = (ball: typeof gameRoom.state.ball) => {
+          ball.x = canvasWidth / 2;
+          ball.y = canvasHeight / 2;
+          ball.dx = Math.random() > 0.5 ? 4 : -4;
+          ball.dy = Math.random() > 0.5 ? 3 : -3;
         };
+
+        resetBall(gameRoom.state.ball);
 
         const interval = setInterval(() => {
           const ball = gameRoom.state.ball;
           const paddles = gameRoom.state.paddles;
+          const inputs = gameRoom.state.inputs;
+          const speed = 8;
+
+          for (let i = 0; i < 2; i++) {
+            if (inputs[i].up) {
+              paddles[i].y = Math.max(0, paddles[i].y - speed);
+            }
+            if (inputs[i].down) {
+              paddles[i].y = Math.min(canvasHeight - paddleHeight, paddles[i].y + speed);
+            }
+          }
 
           ball.x += ball.dx;
           ball.y += ball.dy;
 
-          if (ball.y <= 0 || ball.y >= canvasHeight) {
+          if (ball.y - ballRadius <= 0 || ball.y + ballRadius >= canvasHeight) {
             ball.dy *= -1;
           }
 
@@ -176,6 +183,21 @@ export function buildApp(): FastifyInstance {
             resetBall(ball);
           }
 
+          const winningScore = 4;
+          if (score[0] >= winningScore || score[1] >= winningScore) {
+            const winner = score[0] >= winningScore ? 0 : 1;
+
+            for (const player of gameRoom.players) {
+              player.socket.send(JSON.stringify({
+                type: 'gameover',
+                winner
+              }));
+            }
+
+            clearInterval(interval);
+            return;
+          }
+
           const gameState = {
             type: 'state',
             ball: { x: ball.x, y: ball.y },
@@ -192,13 +214,6 @@ export function buildApp(): FastifyInstance {
 
         }, 1000 / 60); // 60 FPS
 
-        const resetBall = (ball: typeof gameRoom.state.ball) => {
-          ball.x = canvasWidth / 2;
-          ball.y = canvasHeight / 2;
-          ball.dx = Math.random() > 0.5 ? 4 : -4;
-          ball.dy = Math.random() > 0.5 ? 3 : -3;
-        };
-
         for (const player of gameRoom.players) {
           player.socket.on('close', () => {
             clearInterval(interval);
@@ -210,8 +225,9 @@ export function buildApp(): FastifyInstance {
         gameRoom.players = gameRoom.players.filter(p => p.socket !== socket);
       });
 
-    })
-  })
+    });
+  });
+
 
   return app;
 }
